@@ -6,10 +6,8 @@ import random
 
 def load_spam_collection(data_path, seed=123):
     ''' 
-        Classification:
-        
-        SPAM: 1
-        HAM: 0
+        All labels were changed to the following classification: 
+        spam is converted to 1 and ham to 0.
     '''
 
     spamfilter_df = pd.read_csv(data_path, delimiter='\t', header=None)
@@ -22,6 +20,12 @@ def load_spam_collection(data_path, seed=123):
         train_texts.append(row['message'])
         train_labels.append(1 if row['label'] == "spam" else 0)
     
+
+    '''
+        Randomization of the text data and the label data 
+        so that the model does not pick up any patterns that 
+        may interfere with the order of the data.
+    '''
     random.seed(seed)
     random.shuffle(train_texts)
     random.seed(seed)
@@ -90,7 +94,7 @@ def plot_class_distribuition(labels):
     plt.xticks(idx, idx)
     plt.show()
 
-data_path = "data/SMSSpamCollection" 
+data_path = "data/SMSSpamCollection" # You may need to change the directory on your machine for it to work.
 train_text, train_labels = load_spam_collection(data_path)
 
 num_doc = get_num_documents(train_text)
