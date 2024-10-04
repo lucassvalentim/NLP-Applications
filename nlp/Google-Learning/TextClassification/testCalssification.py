@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import f_classif
 import random
 import os
 
@@ -69,9 +72,48 @@ def get_num_classes(labels):
     
     return num_classes
 
+def ngram_vectorize(train_texts, train_labels, val_texts):
+    # Vectorization parameters
+    NGRAM_RANGE = (1, 2) # Range (inclusive) of n-gram sizes for tokenizing text
+    
+    TOP_K = 20000 # Limit on the number of features
+    
+    TOKEN_MODE = 'word' # Wheter text should be split intp word or character n-grams
+
+    MIN_DOCUMENT_FREQUENCY = 2 # Minimum document/corpus frequency below which a token will ne discared 
+
+    kwargs = {
+        'ngram_range': NGRAM_RANGE,
+        'dtype': 'int32',
+        'strip_accents':'unicode',
+        'decode_error':'replace',
+        'analyzer':TOKEN_MODE,
+        'min_df': MIN_DOCUMENT_FREQUENCY
+    }
+
+    vectorizer = TfidfVectorizer(**kwargs)
+
+    # Learn vocabulary from training and vectorize training texts
+    x_train = vectorizer.fit_transform(train_texts)
+
+    # Vectorize validation texts.
+    x_val = vectorizer.transform(val_texts)
+
+    # Select top 'k' of the vectorized features
+    selector = SelectKBest(f_classif, k=min(TOP_K, x_train.shape[1]))
+    selector.fit(x_train, train_labels)
+
+    x_train = selector.transform(x_train).astype('float32')
+    x_val = selector.transform(x_val).astype('float32')
+
+    return x_train, x_val
+
 train_data, test_data = load_imdb_sentiment_analysis_dataset('C:\\Users\\lucas\\Desktop')
 
-num_words_per_sample = get_num_words_per_sample(train_data[0])
-print(num_words_per_sample)
-print(get_num_classes(train_data[1]))
-plot_sample_length_distribuition(train_data[0])
+x_train, x_val = ngram_vectorize(train_data[0], train_data[1], test_data[0])
+print(x_train[0:5].toarray()cd)
+
+# num_words_per_sample = get_num_words_per_sample(train_data[0])
+# print(num_words_per_sample)
+# print(get_num_classes(train_data[1]))
+# plot_sample_length_distribuition(train_data[0])
